@@ -79,26 +79,30 @@ cmake:
 	touch CMakeLists.txt
 	$(MAKE) build/.ran-cmake
 
-build/.ran-cmake: | deps
+build:
+	mkdir -p $@
+
+build/.ran-cmake: | deps build
 	cd build && $(CMAKE_PRG) -G '$(BUILD_TYPE)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(THIS_DIR)
 	touch $@
 
+ifeq ($(call filter-true,$(USE_BUNDLED)),)
 deps: | build/.ran-third-party-cmake
-ifeq ($(call filter-true,$(USE_BUNDLED)),)
 	+$(BUILD_CMD) -C $(DEPS_BUILD_DIR)
-endif
 
-build/.ran-third-party-cmake::
-	mkdir -p build
-	touch $@
-
-ifeq ($(call filter-true,$(USE_BUNDLED)),)
-$(DEPS_BUILD_DIR):
-	mkdir -p "$@"
-build/.ran-third-party-cmake:: $(DEPS_BUILD_DIR)
+build/.ran-third-party-cmake: $(DEPS_BUILD_DIR) | build
 	cd $(DEPS_BUILD_DIR) && \
 		$(CMAKE_PRG) -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
 		$(DEPS_CMAKE_FLAGS) $(THIS_DIR)/third-party
+	touch $@
+
+# Create deps dir, and indicate that CMake must be run (after "rm -rf .deps").
+$(DEPS_BUILD_DIR):
+	mkdir -p $(DEPS_BUILD_DIR)
+	$(RM) build/.ran-third-party-cmake
+
+else
+deps: ;
 endif
 
 # TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
