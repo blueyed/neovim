@@ -264,6 +264,10 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
   int retval;
   char_u *buf = NULL;
 
+  if (quit_more) {
+    return true;
+  }
+
   if (keep && multiline) {
     // Not implemented. 'multiline' is only used by nvim-added messages,
     // which should avoid 'keep' behavior (just show the message at
@@ -2060,12 +2064,10 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
         --lines_left;
       if (p_more && lines_left == 0 && State != HITRETURN
           && !msg_no_more && !exmode_active) {
-        if (quit_more) {
-          return;
-        }
-        if (do_more_prompt(NUL)) {
+        if (do_more_prompt(NUL))
           s = confirm_msg_tail;
-        }
+        if (quit_more)
+          return;
       }
 
       /* When we displayed a char in last column need to check if there
