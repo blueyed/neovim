@@ -2060,10 +2060,12 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
         --lines_left;
       if (p_more && lines_left == 0 && State != HITRETURN
           && !msg_no_more && !exmode_active) {
-        if (do_more_prompt(NUL))
-          s = confirm_msg_tail;
-        if (quit_more)
+        if (quit_more) {
           return;
+        }
+        if (do_more_prompt(NUL)) {
+          s = confirm_msg_tail;
+        }
       }
 
       /* When we displayed a char in last column need to check if there
@@ -2838,6 +2840,7 @@ void msg_moremsg(int full)
   int attr;
   char_u      *s = (char_u *)_("-- More --");
 
+  assert(!quit_more);
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), HL_ATTR(HLF_M));
   grid_puts(&msg_grid_adj, s, Rows - 1, 0, attr);
   if (full) {
